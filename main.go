@@ -51,6 +51,7 @@ type Col struct {
 func main() {
 	checkArgs()
 	var err error
+	//fmt.Println(Adapter, DBAuth+"@tcp("+DBAddr+")/"+DBName+"?charset=utf8mb4")
 	db, _ := sqlx.Connect(Adapter, DBAuth+"@tcp("+DBAddr+")/"+DBName+"?charset=utf8mb4")
 	if err = db.Ping(); err != nil {
 		panic(err.Error())
@@ -76,8 +77,11 @@ func main() {
 		if err := db.Select(&ColInfo, "SHOW FULL COLUMNS FROM "+tbName); err != nil {
 			panic(err.Error())
 		}
+		var tags []string
+		if Tag != "" {
+			tags = strings.Split(strings.ReplaceAll(Tag, " ", ""), ",")
+		}
 
-		tags := strings.Split(strings.ReplaceAll(Tag, " ", ""), ",")
 		colStr := ""
 
 		// beautiful code
@@ -113,7 +117,7 @@ func main() {
 		}
 	}
 	scpt := ""
-	fmt.Print("Create generate script ? Y/y generate, other omit: ")
+	fmt.Print("Create generate script? Y/y to generate, other omit : ")
 	fmt.Scanln(&scpt)
 	if scpt == "y" || scpt == "Y" {
 		createScript(DBAddr, DBName, Dir, Tag, Adapter, TableFn)
@@ -171,6 +175,8 @@ func checkArgs() {
 		} else {
 			fmt.Println("using -dir=./model")
 		}
+	} else {
+		Dir = *dir
 	}
 
 	// tag
@@ -182,6 +188,8 @@ func checkArgs() {
 		} else {
 			fmt.Println("empty tag")
 		}
+	} else {
+		Tag = *tag
 	}
 
 	if *adapter == "" {
@@ -192,6 +200,8 @@ func checkArgs() {
 		} else {
 			fmt.Println("using -adapter=mysql")
 		}
+	} else {
+		Adapter = *adapter
 	}
 
 	if *tbList == "" {
@@ -203,6 +213,9 @@ func checkArgs() {
 				TabList = tbs
 			}
 		}
+	} else {
+		tbs := strings.Split(strings.Trim(*tbList, ","), ",")
+		TabList = tbs
 	}
 
 	if *fn == "" {
@@ -211,6 +224,8 @@ func checkArgs() {
 		if *fn == "y" || *fn == "Y" {
 			TableFn = true
 		}
+	} else if *fn == "y" || *fn == "Y" {
+		TableFn = true
 	}
 
 	// set package name
@@ -275,10 +290,12 @@ type {tableContent} struct{
 }
 {tableStr}
 `
-	importStr := `import (
-	"time"
+	importStr := `
+import (
+    "time"
 )`
-	tableStr := `func (t *{tableContent}) Table() string {
+	tableStr := `
+func (t *{tableContent}) Table() string {
     return "{tableName}"
 }`
 	tpl = strings.ReplaceAll(tpl, "{packName}", packName)
@@ -289,14 +306,13 @@ type {tableContent} struct{
 	} else {
 		tpl = strings.ReplaceAll(tpl, "{import}", "")
 	}
-
 	if TableFn {
 		tpl = strings.ReplaceAll(tpl, "{tableStr}", tableStr)
-		tpl = strings.ReplaceAll(tpl, "{tableContent}", strcase.ToCamel(tableName))
 		tpl = strings.ReplaceAll(tpl, "{tableName}", tableName)
 	} else {
 		tpl = strings.ReplaceAll(tpl, "{tableStr}", "")
 	}
+	tpl = strings.ReplaceAll(tpl, "{tableContent}", strcase.ToCamel(tableName))
 	return tpl
 }
 
@@ -417,7 +433,7 @@ func tagInfo(s Col, tag string) string {
 			tagStr = tagStr + " default(" + string(s.Default) + ")"
 		}
 		if s.Comment != "" {
-			tagStr = tagStr + " comment(" + strings.ReplaceAll(strings.ReplaceAll(s.Comment, "\n", ""), "\"", "\\\"") + ")"
+			tagStr = tagStr + " comment(" + strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(s.Comment, "\n", ""), "\"", "\\\""), "\\", "\\\\") + ")"
 		}
 	} else if tag == "gorm" {
 		if s.Key != "" {
@@ -478,6 +494,7 @@ pause`
 		fn = "y"
 	}
 	script = strings.ReplaceAll(script, "{fn}", fn)
+	script = strings.ReplaceAll(script, "\\", "/")
 
 	if err := ioutil.WriteFile("cmd_db"+suffix, []byte(script), 0777); err != nil {
 		panic(err.Error())
