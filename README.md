@@ -2,15 +2,22 @@
 
 it a db columns to go structure project.
 
-support postgre and mysql db
+
+## Features
+- support mysql , postgres
+- special for `xorm` and `gorm`
+- support any tags
+- generate a .bath/.sh script for next run
+
+## Install
 
 > go get -u -v github.com/athanxx/dbtag
 
-and run : 
+## Example 
 
 > dbtag
 
-or use args to input
+or use args
 
 > dbtag -db_addr=127.0.0.1:3306 -db_auth=root:123456 -db_name=abc -adapter=postgres -dir=./model -fn=y   
 
@@ -18,7 +25,7 @@ it will ask what tables you want to generate, supported any tag what you want.
 
 supported `xorm` and `gorm` formats to generate template structure.
 
-
+## Args
 
 `-db_addr` db host and port `127.0.0.1:3306`
 

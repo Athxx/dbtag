@@ -1,4 +1,4 @@
-module github/athanxx/dbtag
+module github.com/athanxx/dbtag
 
 go 1.16
 
