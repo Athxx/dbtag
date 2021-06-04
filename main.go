@@ -463,15 +463,16 @@ func createScript(addr, dbname, dir, tag, adpt string, tabFn bool) {
 	var script, suffix string
 	if "windows" == runtime.GOOS {
 		suffix = ".bat"
-		script = `{cmd} -db_addr={db_addr} -db_name={dbname} -adapter={adpt} -dir={dir} {tags} -fn={fn}
+		script = `go get -v -u github.com/athanxx/dbtag
+dbtag -db_addr={db_addr} -db_name={dbname} -adapter={adpt} -dir={dir} {tags} -fn={fn}
 @pause`
 	} else {
 		suffix = ".sh"
 		script = `#!/bin/bash
-{cmd} -db_addr={db_addr} -db_name={dbname} -adapter={adpt} -dir={dir} {tags} -fn={fn}`
+go get -v -u github.com/athanxx/dbtag
+dbtag -db_addr={db_addr} -db_name={dbname} -adapter={adpt} -dir={dir} {tags} -fn={fn}`
 	}
 
-	script = strings.ReplaceAll(script, "{cmd}", os.Args[0])
 	script = strings.ReplaceAll(script, "{db_addr}", addr)
 	script = strings.ReplaceAll(script, "{dbname}", dbname)
 	script = strings.ReplaceAll(script, "{adpt}", adpt)
