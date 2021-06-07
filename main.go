@@ -306,7 +306,7 @@ func tpl(packName, tableName, sql, colContent string, cols []string) string {
 {createTableSql}
 */
 
-type {tableContent} struct{
+type {tableContent} struct {
 {colContent}
 }
 {tableStr}`
@@ -337,7 +337,7 @@ func (t {tableContent}) Cols() []string {
 		tpl = strings.ReplaceAll(tpl, "{tableStr}", "")
 	}
 	tpl = strings.ReplaceAll(tpl, "{tableContent}", strcase.ToCamel(tableName))
-	tpl = strings.ReplaceAll(tpl, "{colsName}", "\""+strings.Join(cols, "\",\"")+"\"")
+	tpl = strings.ReplaceAll(tpl, "{colsName}", "\""+strings.Join(cols, "\", \"")+"\"")
 	return tpl
 }
 
