@@ -82,11 +82,13 @@ func main() {
 		}
 
 		colStr := ""
+		var colList []string
 
 		// beautiful code
 		var maxTbLen int
 		var maxTypeLen int
 		for _, val := range ColInfo {
+			colList = append(colList, val.Field)
 			tbLen := len(tableNameConvert(val.Field))
 			if tbLen > maxTbLen {
 				maxTbLen = tbLen
@@ -109,7 +111,7 @@ func main() {
 			colStr += "    " + spaceFill(tableNameConvert(val.Field), maxTbLen) + " " + spaceFill(colMatchList(val.Type), maxTypeLen) + ss + "\n"
 		}
 		mkdir(Dir)
-		content := tpl(PackName, tbName, sql, strings.Trim(colStr, "\n"))
+		content := tpl(PackName, tbName, sql, strings.Trim(colStr, "\n"), colList)
 		fname := strings.TrimRight(Dir, "/") + "/" + PackName + "_" + tbName + ".go"
 		if err := ioutil.WriteFile(fname, []byte(content), 0777); err != nil {
 			fmt.Println(err.Error())
@@ -277,7 +279,7 @@ func tableNameConvert(tbName string) string {
 	return tbName
 }
 
-func tpl(packName, tableName, sql, colContent string) string {
+func tpl(packName, tableName, sql, colContent string, cols []string) string {
 	tpl := `package {packName}
 {import}
 /*
@@ -296,7 +298,12 @@ import (
 	tableStr := `
 func (t *{tableContent}) Table() string {
     return "{tableName}"
-}`
+}
+
+func (t *{tableContent}) Cols() []string {
+    return []string{{colsName}}
+}
+`
 	tpl = strings.ReplaceAll(tpl, "{packName}", packName)
 	tpl = strings.ReplaceAll(tpl, "{createTableSql}", sql)
 	tpl = strings.ReplaceAll(tpl, "{colContent}", colContent)
@@ -312,6 +319,7 @@ func (t *{tableContent}) Table() string {
 		tpl = strings.ReplaceAll(tpl, "{tableStr}", "")
 	}
 	tpl = strings.ReplaceAll(tpl, "{tableContent}", strcase.ToCamel(tableName))
+	tpl = strings.ReplaceAll(tpl, "{colsName}", "\""+strings.Join(cols, "\",\"")+"\"")
 	return tpl
 }
 
