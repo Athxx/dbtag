@@ -81,9 +81,7 @@ func main() {
 			tags = strings.Split(strings.ReplaceAll(Tag, " ", ""), ",")
 		}
 
-		colStr := ""
 		var colList []string
-
 		// beautiful code
 		var maxTbLen int
 		var maxTypeLen int
@@ -100,6 +98,12 @@ func main() {
 		}
 
 		// combine sql
+		maxLen := 0
+		type Arr struct {
+			Key     string
+			Comment string
+		}
+		var colsArr []Arr
 		for _, val := range ColInfo {
 			var ss string
 			if len(tags) > 0 {
@@ -110,9 +114,21 @@ func main() {
 			}
 			commentStr := ""
 			if len(strings.TrimSpace(val.Comment)) > 0 {
-				commentStr = " // " + val.Comment
+				commentStr = " // " + val.Comment + "\n"
 			}
-			colStr += "    " + spaceFill(tableNameConvert(val.Field), maxTbLen) + " " + spaceFill(colMatchList(val.Type), maxTypeLen) + ss + commentStr + "\n"
+			tmp := "    " + spaceFill(tableNameConvert(val.Field), maxTbLen) + " " + spaceFill(colMatchList(val.Type), maxTypeLen) + ss
+			if maxLen < len(tmp) {
+				maxLen = len(tmp)
+			}
+			colsArr = append(colsArr, Arr{tmp, commentStr})
+		}
+		colStr := ""
+		for _, vv := range colsArr {
+			if vv.Comment != "" {
+				colStr += spaceFill(vv.Key, maxLen) + vv.Comment
+			} else {
+				colStr += vv.Key + "\n"
+			}
 		}
 		mkdir(Dir)
 		content := tpl(PackName, tbName, sql, strings.Trim(colStr, "\n"), colList)
@@ -293,8 +309,7 @@ func tpl(packName, tableName, sql, colContent string, cols []string) string {
 type {tableContent} struct{
 {colContent}
 }
-{tableStr}
-`
+{tableStr}`
 	importStr := `
 import (
     "time"
@@ -306,8 +321,7 @@ func (t *{tableContent}) Table() string {
 
 func (t *{tableContent}) Cols() []string {
     return []string{{colsName}}
-}
-`
+}`
 	tpl = strings.ReplaceAll(tpl, "{packName}", packName)
 	tpl = strings.ReplaceAll(tpl, "{createTableSql}", sql)
 	tpl = strings.ReplaceAll(tpl, "{colContent}", colContent)
