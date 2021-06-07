@@ -471,13 +471,11 @@ func createScript(addr, dbname, dir, tag, adpt string, tabFn bool) {
 	var script, suffix string
 	if "windows" == runtime.GOOS {
 		suffix = ".bat"
-		script = `go get -v -u github.com/athanxx/dbtag
-dbtag -db_addr={db_addr} -db_name={dbname} -adapter={adpt} -dir={dir} {tags} -fn={fn}
+		script = `dbtag -db_addr={db_addr} -db_name={dbname} -adapter={adpt} -dir={dir} {tags} -fn={fn}
 @pause`
 	} else {
 		suffix = ".sh"
 		script = `#!/bin/bash
-go get -v -u github.com/athanxx/dbtag
 dbtag -db_addr={db_addr} -db_name={dbname} -adapter={adpt} -dir={dir} {tags} -fn={fn}`
 	}
 
