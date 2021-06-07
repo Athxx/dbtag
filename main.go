@@ -315,11 +315,11 @@ import (
     "time"
 )`
 	tableStr := `
-func (t *{tableContent}) Table() string {
+func (t {tableContent}) Table() string {
     return "{tableName}"
 }
 
-func (t *{tableContent}) Cols() []string {
+func (t {tableContent}) Cols() []string {
     return []string{{colsName}}
 }`
 	tpl = strings.ReplaceAll(tpl, "{packName}", packName)
