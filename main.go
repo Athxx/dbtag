@@ -108,7 +108,11 @@ func main() {
 				}
 				ss = " `" + strings.Trim(ss, " ") + "`"
 			}
-			colStr += "    " + spaceFill(tableNameConvert(val.Field), maxTbLen) + " " + spaceFill(colMatchList(val.Type), maxTypeLen) + ss + "\n"
+			commentStr := ""
+			if len(strings.TrimSpace(val.Comment)) > 0 {
+				commentStr = " // " + val.Comment
+			}
+			colStr += "    " + spaceFill(tableNameConvert(val.Field), maxTbLen) + " " + spaceFill(colMatchList(val.Type), maxTypeLen) + ss + commentStr + "\n"
 		}
 		mkdir(Dir)
 		content := tpl(PackName, tbName, sql, strings.Trim(colStr, "\n"), colList)
@@ -439,9 +443,6 @@ func tagInfo(s Col, tag string) string {
 		if string(s.Default) != "" {
 			tagStr = tagStr + " default(" + string(s.Default) + ")"
 		}
-		if s.Comment != "" {
-			tagStr = tagStr + " comment(" + strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(s.Comment, "\n", ""), "\"", "\\\""), "\\", "\\\\") + ")"
-		}
 	} else if tag == "gorm" {
 		if s.Key != "" {
 			if s.Key == "PRI" {
@@ -456,9 +457,6 @@ func tagInfo(s Col, tag string) string {
 		}
 		if string(s.Default) != "" {
 			tagStr = tagStr + ";default:" + string(s.Default)
-		}
-		if s.Comment != "" {
-			tagStr = tagStr + ";comment:" + strings.ReplaceAll(strings.ReplaceAll(s.Comment, "\n", ""), "\"", "\\\"")
 		}
 	} else {
 		tagStr = s.Field
