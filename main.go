@@ -104,10 +104,12 @@ func main() {
 			Comment string
 		}
 		var colsArr []Arr
+		var pk string
 		for _, val := range ColInfo {
 			var ss string
 			if len(tags) > 0 {
 				for _, vv := range tags {
+
 					ss += " " + tagInfo(val, vv)
 				}
 				ss = " `" + strings.Trim(ss, " ") + "`"
@@ -121,6 +123,10 @@ func main() {
 				maxLen = len(tmp)
 			}
 			colsArr = append(colsArr, Arr{tmp, commentStr})
+			// only can recognize one primary key
+			if pk == "" && val.Key == "PRI" {
+				pk = val.Field
+			}
 		}
 		colStr := ""
 		for _, vv := range colsArr {
@@ -131,7 +137,7 @@ func main() {
 			}
 		}
 		mkdir(Dir)
-		content := tpl(PackName, tbName, sql, strings.Trim(colStr, "\n"), colList)
+		content := tpl(PackName, tbName, pk, sql, strings.Trim(colStr, "\n"), colList)
 		fname := strings.TrimRight(Dir, "/") + "/" + PackName + "_" + tbName + ".go"
 		if err := ioutil.WriteFile(fname, []byte(content), 0777); err != nil {
 			fmt.Println(err.Error())
@@ -299,7 +305,7 @@ func tableNameConvert(tbName string) string {
 	return tbName
 }
 
-func tpl(packName, tableName, sql, colContent string, cols []string) string {
+func tpl(packName, tableName, pk, sql, colContent string, cols []string) string {
 	tpl := `package {packName}
 {import}
 /*
@@ -315,8 +321,12 @@ import (
     "time"
 )`
 	tableStr := `
-func (t {tableContent}) Table() string {
+func (t {tableContent}) TableName() string {
     return "{tableName}"
+}
+
+func (t {tableContent}) PK() string {
+    return "{pk}"
 }
 
 func (t {tableContent}) Cols() []string {
@@ -337,6 +347,7 @@ func (t {tableContent}) Cols() []string {
 		tpl = strings.ReplaceAll(tpl, "{tableStr}", "")
 	}
 	tpl = strings.ReplaceAll(tpl, "{tableContent}", strcase.ToCamel(tableName))
+	tpl = strings.ReplaceAll(tpl, "{pk}", pk)
 	tpl = strings.ReplaceAll(tpl, "{colsName}", "\""+strings.Join(cols, "\", \"")+"\"")
 	return tpl
 }
