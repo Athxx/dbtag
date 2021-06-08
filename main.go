@@ -143,6 +143,7 @@ func main() {
 			fmt.Println(err.Error())
 		}
 	}
+	createBaseInterface(strings.TrimRight(Dir, "/") + "/" + PackName + "_base_interface.go")
 	scpt := ""
 	fmt.Print("Create generate script? Y/y to generate, other omit : ")
 	fmt.Scanln(&scpt)
@@ -519,5 +520,18 @@ dbtag -db_addr={db_addr} -db_name={dbname} -adapter={adpt} -dir={dir} {tags} -fn
 
 	if err := ioutil.WriteFile("cmd_db"+suffix, []byte(script), 0777); err != nil {
 		panic(err.Error())
+	}
+}
+
+func createBaseInterface(fname string) {
+	base := `package model
+
+type Model interface {
+	TableName() string
+	PK() string
+	Cols() []string
+}`
+	if err := ioutil.WriteFile(fname, []byte(base), 0777); err != nil {
+		fmt.Println(err.Error())
 	}
 }
