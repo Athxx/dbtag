@@ -33,6 +33,7 @@ var (
 	DBAuth   string
 	DBAddr   string
 	DBName   string
+	SqlNull  bool
 )
 
 type Col struct {
@@ -91,7 +92,7 @@ func main() {
 			if tbLen > maxTbLen {
 				maxTbLen = tbLen
 			}
-			typeLen := len(colMatchList(val.Type))
+			typeLen := len(colMatchList(val.Type, val.Null))
 			if typeLen > maxTypeLen {
 				maxTypeLen = typeLen
 			}
@@ -118,7 +119,7 @@ func main() {
 			if len(strings.TrimSpace(val.Comment)) > 0 {
 				commentStr = " // " + val.Comment + "\n"
 			}
-			tmp := "    " + spaceFill(tableNameConvert(val.Field), maxTbLen) + " " + spaceFill(colMatchList(val.Type), maxTypeLen) + ss
+			tmp := "    " + spaceFill(tableNameConvert(val.Field), maxTbLen) + " " + spaceFill(colMatchList(val.Type, val.Null), maxTypeLen) + ss
 			if maxLen < len(tmp) {
 				maxLen = len(tmp)
 			}
@@ -148,7 +149,7 @@ func main() {
 	fmt.Print("Create generate script? Y/y to generate, other omit : ")
 	fmt.Scanln(&scpt)
 	if scpt == "y" || scpt == "Y" {
-		createScript(DBAddr, DBName, Dir, Tag, Adapter, TableFn)
+		createScript(DBAddr, DBName, Dir, Tag, Adapter, TableFn, SqlNull)
 	}
 }
 
@@ -156,6 +157,7 @@ func checkArgs() {
 	dir := flag.String("dir", "", "directory path")
 	tag := flag.String("tag", "", "tags = xorm,json,db")
 	adapter := flag.String("adapter", "", "for db adapter")
+	sqlNull := flag.String("sqlnull", "", "for db sqlnull")
 	dbAuth := flag.String("db_auth", "", "for db auth")
 	dbAddr := flag.String("db_addr", "", "for db addr")
 	dbName := flag.String("db_name", "", "for db name")
@@ -223,13 +225,27 @@ func checkArgs() {
 	if *adapter == "" {
 		fmt.Print("Input adapter, 'postgres' or 'mysql', leave empty default 'mysql' or use -adapter=postgres : ")
 		fmt.Scanln(adapter)
-		if *adapter != "" && (*tag == "mysql" || *tag == "postgres") {
+		if *adapter != "" && (*adapter == "mysql" || *adapter == "postgres") {
 			Adapter = *adapter
 		} else {
 			fmt.Println("using -adapter=mysql")
 		}
 	} else {
 		Adapter = *adapter
+	}
+
+	if *sqlNull == "" {
+		fmt.Print("Use sql.Null? Y/y to use, leave empty default no or use -sqlnull=y :")
+		fmt.Scanln(sqlNull)
+		if *sqlNull != "" && (*sqlNull == "Y" || *sqlNull == "y") {
+			SqlNull = true
+		} else {
+			fmt.Println("not using sql.Null")
+		}
+	} else {
+		if *sqlNull == "Y" || *sqlNull == "y" {
+			SqlNull = true
+		}
 	}
 
 	if *tbList == "" {
@@ -317,10 +333,21 @@ type {tableContent} struct {
 {colContent}
 }
 {tableStr}`
-	importStr := `
+	importTimeStr := `
 import (
     "time"
 )`
+	importSqlStr := `
+import (
+    "database/sql"
+)
+`
+	importTimeAndSqlStr := `
+import (
+    "database/sql"
+    "time"
+)
+`
 	tableStr := `
 func ({tableContent}) TableName() string {
     return "{tableName}"
@@ -336,8 +363,13 @@ func ({tableContent}) Cols() []string {
 	tpl = strings.ReplaceAll(tpl, "{packName}", packName)
 	tpl = strings.ReplaceAll(tpl, "{createTableSql}", sql)
 	tpl = strings.ReplaceAll(tpl, "{colContent}", colContent)
-	if strings.Count(colContent, "time.Time") > 0 {
-		tpl = strings.ReplaceAll(tpl, "{import}", importStr)
+	// import string
+	if strings.Count(colContent, "time.Time") > 0 && strings.Count(colContent, "sql.Null") > 0 {
+		tpl = strings.ReplaceAll(tpl, "{import}", importTimeAndSqlStr)
+	} else if strings.Count(colContent, "time.Time") > 0 {
+		tpl = strings.ReplaceAll(tpl, "{import}", importTimeStr)
+	} else if strings.Count(colContent, "sql.Null") > 0 {
+		tpl = strings.ReplaceAll(tpl, "{import}", importSqlStr)
 	} else {
 		tpl = strings.ReplaceAll(tpl, "{import}", "")
 	}
@@ -393,7 +425,25 @@ var TypeMysqlDicMp = map[string]string{
 	"longblob":   "[]byte",
 }
 
-// TypeMysqlMatchList Fuzzy Matching Types
+// TypeSqlNullList cause int,float,bool has a default value in golang, so they not in consider
+var TypeSqlNullList = []struct {
+	Key   string
+	Value string
+}{
+	{`^(char)[(]\d+[)]`, `sql.NullString`},
+	{`^(varchar)[(]\d+[)]`, `sql.NullString`},
+	{`^(json)`, `sql.NullString`},
+	{`^(text)`, `sql.NullString`},
+	{`^(date)`, `sql.NullString`},
+	{`^(longtext)`, `sql.NullString`},
+	{`^(tinytext)`, `sql.NullString`},
+	{`^(mediumtext)`, `sql.NullString`},
+
+	{`^(time)`, `sql.NullTime`},
+	{`^(timestamp)`, `sql.NullTime`},
+	{`^(datetime)`, `sql.NullTime`},
+}
+
 var TypeMysqlMatchList = []struct {
 	Key   string
 	Value string
@@ -432,7 +482,15 @@ var TypeMysqlMatchList = []struct {
 	{`^(geometry)[(]\d+[)]`, "[]byte"},
 }
 
-func colMatchList(name string) string {
+func colMatchList(name string, isNull []byte) string {
+	if !SqlNull && string(isNull) == "YES" {
+		for _, l := range TypeSqlNullList {
+			if ok, _ := regexp.MatchString(l.Key, name); ok {
+				return l.Value
+			}
+		}
+	}
+
 	// Precise matching first
 	if v, ok := TypeMysqlDicMp[name]; ok {
 		return v
@@ -491,16 +549,16 @@ func tagInfo(s Col, tag string) string {
 	return tag + ":\"" + tagStr + "\""
 }
 
-func createScript(addr, dbname, dir, tag, adpt string, tabFn bool) {
+func createScript(addr, dbname, dir, tag, adpt string, tabFn, sqlNull bool) {
 	var script, suffix string
 	if "windows" == runtime.GOOS {
 		suffix = ".bat"
-		script = `dbtag -db_addr={db_addr} -db_name={dbname} -adapter={adpt} -dir={dir} {tags} -fn={fn}
+		script = `dbtag -db_addr={db_addr} -db_name={dbname} -adapter={adpt} -dir={dir} {tags} -fn={fn} -sqlnull={sqlnull}
 @pause`
 	} else {
 		suffix = ".sh"
 		script = `#!/bin/bash
-dbtag -db_addr={db_addr} -db_name={dbname} -adapter={adpt} -dir={dir} {tags} -fn={fn}`
+dbtag -db_addr={db_addr} -db_name={dbname} -adapter={adpt} -dir={dir} {tags} -fn={fn} -sqlnull={sqlnull}`
 	}
 
 	script = strings.ReplaceAll(script, "{db_addr}", addr)
@@ -516,6 +574,11 @@ dbtag -db_addr={db_addr} -db_name={dbname} -adapter={adpt} -dir={dir} {tags} -fn
 		fn = "y"
 	}
 	script = strings.ReplaceAll(script, "{fn}", fn)
+	nullStr := "n"
+	if sqlNull {
+		nullStr = "y"
+	}
+	script = strings.ReplaceAll(script, "{sqlnull}", nullStr)
 	script = strings.ReplaceAll(script, "\\", "/")
 
 	if err := ioutil.WriteFile("cmd_db"+suffix, []byte(script), 0777); err != nil {
