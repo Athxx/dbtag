@@ -72,6 +72,9 @@ func main() {
 			rows.Scan(&sql, &sql)
 		}
 
+		reg, _ := regexp.Compile(`(?i)AUTO_INCREMENT=\d+\s`)
+		sql = reg.ReplaceAllString(sql, "")
+
 		// get columns info
 		var ColInfo []Col
 		if err := db.Select(&ColInfo, "SHOW FULL COLUMNS FROM "+tbName); err != nil {
