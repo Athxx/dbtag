@@ -352,15 +352,15 @@ import (
 )
 `
 	tableStr := `
-func ({tableContent}) TableName() string {
+func (dst *{tableContent}) TableName() string {
     return "{tableName}"
 }
 
-func ({tableContent}) PK() string {
+func (dst *{tableContent}) PK() string {
     return "{pk}"
 }
 
-func ({tableContent}) Cols() []string {
+func (dst *{tableContent}) Cols() []string {
     return []string{{colsName}}
 }`
 	tpl = strings.ReplaceAll(tpl, "{packName}", packName)
