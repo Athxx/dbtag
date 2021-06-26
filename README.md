@@ -6,8 +6,8 @@ it a db columns to go structure project.
 ## Features
 - support mysql , postgres
 - special for `xorm` and `gorm`
-- support any tags
-- generate a .bath/.sh script for next run
+- support any tags, `json`, `yaml`, `xml` and you custom it
+- generate a `.bath`/`.sh` script for next run
 
 ## Install
 
@@ -46,6 +46,10 @@ supported `xorm` and `gorm` formats to generate template structure.
 `-t` table list, use ',' to split it `user_info,user_list`
 
 `-fn` it will create a function Table() to get table name `y` or others 
+
+`-sqlnull` to use sql.NullString `y` or others 
+
+
 
 ## Demo
 
