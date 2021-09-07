@@ -49,7 +49,7 @@ type Col struct {
 }
 
 func main() {
-	checkArgs()
+	base := checkArgs()
 	var err error
 	//fmt.Println(Adapter, DBAuth+"@tcp("+DBAddr+")/"+DBName+"?charset=utf8mb4")
 	db, _ := sqlx.Connect(Adapter, DBAuth+"@tcp("+DBAddr+")/"+DBName+"?charset=utf8mb4")
@@ -147,7 +147,9 @@ func main() {
 			fmt.Println(err.Error())
 		}
 	}
-	createBaseInterface(strings.TrimRight(Dir, "/")+"/"+PackName+"_base_interface.go", PackName)
+	if base == true {
+		createBaseInterface(strings.TrimRight(Dir, "/")+"/"+PackName+"_base_interface.go", PackName)
+	}
 	scpt := ""
 	fmt.Print("Create generate script? Y/y to generate, other omit : ")
 	fmt.Scanln(&scpt)
@@ -156,7 +158,7 @@ func main() {
 	}
 }
 
-func checkArgs() {
+func checkArgs() bool {
 	dir := flag.String("dir", "", "directory path")
 	tag := flag.String("tag", "", "tags = xorm,json,db")
 	adapter := flag.String("adapter", "", "for db adapter")
@@ -255,7 +257,7 @@ func checkArgs() {
 		fmt.Print("Input tables, leave empty create all tables, or use '-t=table1,table2' : ")
 		fmt.Scanln(tbList)
 		if *tbList != "" {
-			tbs := strings.Split(strings.Trim(*tbList, ","), ",")
+			tbs := strings.Split(strings.ReplaceAll(strings.Trim(*tbList, ","), " ", ""), ",")
 			if len(tbs) > 0 {
 				TabList = tbs
 			}
@@ -285,6 +287,10 @@ func checkArgs() {
 	} else {
 		PackName = Dir
 	}
+	if *tbList == "" {
+		return true
+	}
+	return false
 }
 
 func spaceFill(s string, i int) string {
