@@ -91,7 +91,7 @@ func main() {
 		var maxTypeLen int
 		for _, val := range ColInfo {
 			colList = append(colList, val.Field)
-			tbLen := len(tableNameConvert(val.Field))
+			tbLen := len(fieldConvert(val.Field))
 			if tbLen > maxTbLen {
 				maxTbLen = tbLen
 			}
@@ -122,7 +122,7 @@ func main() {
 			if len(strings.TrimSpace(val.Comment)) > 0 {
 				commentStr = " // " + val.Comment + "\n"
 			}
-			tmp := "    " + spaceFill(tableNameConvert(val.Field), maxTbLen) + " " + spaceFill(colMatchList(val.Type, val.Null), maxTypeLen) + ss
+			tmp := "    " + spaceFill(fieldConvert(val.Field), maxTbLen) + " " + spaceFill(colMatchList(val.Type, val.Null), maxTypeLen) + ss
 			if maxLen < len(tmp) {
 				maxLen = len(tmp)
 			}
@@ -318,17 +318,25 @@ func mkdir(dir string) {
 	panic(err.Error())
 }
 
-func tableNameConvert(tbName string) string {
+func fieldConvert(field string) string {
 	// convert string to camel
-	tbName = strcase.ToCamel(tbName)
+	f := strcase.ToCamel(field)
+	l := len(f)
 	// convert id to ID
-	if len(tbName) == 2 {
-		return strings.ToUpper(tbName)
+	if l == 2 {
+		return strings.ToUpper(f)
 	}
-	if len(tbName) == 3 && strings.ToLower(tbName[1:]) == "id" {
-		return strings.ToUpper(tbName)
+	if l == 3 && strings.ToLower(f[1:]) == "id" {
+		return strings.ToUpper(f)
 	}
-	return tbName
+	fieldLen := len(field)
+	if l > 2 && fieldLen > 3 && field[fieldLen-3:] == "_id" {
+		return f[:l-2] + "ID"
+	}
+	if fieldLen > 4 && field[fieldLen-4] == '_' && field[fieldLen-2:] == "id" {
+		return f[:l-3] + strings.ToUpper(f[l-3:])
+	}
+	return f
 }
 
 func tpl(packName, tableName, pk, sql, colContent string, cols []string) string {
@@ -368,7 +376,8 @@ func (dst *{tableContent}) PK() string {
 
 func (dst *{tableContent}) Cols() []string {
     return []string{{colsName}}
-}`
+}
+`
 	tpl = strings.ReplaceAll(tpl, "{packName}", packName)
 	tpl = strings.ReplaceAll(tpl, "{createTableSql}", sql)
 	tpl = strings.ReplaceAll(tpl, "{colContent}", colContent)
@@ -602,7 +611,8 @@ type Model interface {
 	TableName() string
 	PK() string
 	Cols() []string
-}`
+}
+`
 	base = strings.ReplaceAll(base, "{packName}", packageName)
 	if err := ioutil.WriteFile(fname, []byte(base), 0777); err != nil {
 		fmt.Println(err.Error())
