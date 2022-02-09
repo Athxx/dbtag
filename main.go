@@ -54,13 +54,15 @@ func main() {
 	//fmt.Println(Adapter, DBAuth+"@tcp("+DBAddr+")/"+DBName+"?charset=utf8mb4")
 	db, _ := sqlx.Connect(Adapter, DBAuth+"@tcp("+DBAddr+")/"+DBName+"?charset=utf8mb4")
 	if err = db.Ping(); err != nil {
-		panic(err.Error())
+		fmt.Println("Cannot connect db server : " + err.Error())
+		return
 	}
 	// get tables list
 	tbs := TabList
 	if len(tbs) == 0 {
 		if err = db.Select(&tbs, "SHOW TABLES;"); err != nil {
-			panic(err.Error())
+			fmt.Println("Cannot get tables : " + err.Error())
+			return
 		}
 	}
 
@@ -77,8 +79,9 @@ func main() {
 
 		// get columns info
 		var ColInfo []Col
-		if err := db.Select(&ColInfo, "SHOW FULL COLUMNS FROM "+tbName); err != nil {
-			panic(err.Error())
+		if err = db.Select(&ColInfo, "SHOW FULL COLUMNS FROM "+tbName); err != nil {
+			fmt.Println("Cannot get table [ " + tbName + " ] columns : " + err.Error())
+			return
 		}
 		var tags []string
 		if Tag != "" {
@@ -307,15 +310,15 @@ func mkdir(dir string) {
 		return
 	}
 	if f != nil && !f.IsDir() {
-		panic("exist same path file")
+		panic("exist same path file : " + dir)
 	}
 	if os.IsNotExist(err) {
-		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-			panic(err.Error())
+		if err = os.MkdirAll(dir, os.ModePerm); err != nil {
+			panic("Cannot mkdir for path: " + dir + " , error: " + err.Error())
 		}
 		return
 	}
-	panic(err.Error())
+	panic("Cannot path error : " + dir + " , " + err.Error())
 }
 
 func fieldConvert(field string) string {
