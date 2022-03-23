@@ -206,7 +206,7 @@ func checkArgs() bool {
 	}
 
 	if *dir == "" {
-		fmt.Print("Input directory path, leave empty default './model' or use ' -dir=./model ' : ")
+		fmt.Print("Input directory path, default './model' or use ' -dir=./model ' : ")
 		fmt.Scanln(dir)
 		if *dir != "" {
 			Dir = *dir
@@ -219,7 +219,7 @@ func checkArgs() bool {
 
 	// tag
 	if *tag == "" {
-		fmt.Print("Input any tags, use ',' to split it (leave empty will not create tag) or use -tags=xorm,yaml,toml : ")
+		fmt.Print("Input any tags, use ',' to split it (empty will not create tag) or use -tags=xorm,yaml,json,db : ")
 		fmt.Scanln(tag)
 		if *tag != "" {
 			Tag = *tag
@@ -231,7 +231,7 @@ func checkArgs() bool {
 	}
 
 	if *adapter == "" {
-		fmt.Print("Input adapter, 'postgres' or 'mysql', leave empty default 'mysql' or use -adapter=postgres : ")
+		fmt.Print("Input adapter, 'postgres' or 'mysql', other default 'mysql', command : [ -adapter=postgres]  : ")
 		fmt.Scanln(adapter)
 		if *adapter != "" && (*adapter == "mysql" || *adapter == "postgres") {
 			Adapter = *adapter
@@ -257,7 +257,7 @@ func checkArgs() bool {
 	}
 
 	if *tbList == "" {
-		fmt.Print("Input tables, leave empty create all tables, or use '-t=table1,table2' : ")
+		fmt.Print("Input tables, others all tables, command [ '-t=table1,table2' ] : ")
 		fmt.Scanln(tbList)
 		if *tbList != "" {
 			tbs := strings.Split(strings.ReplaceAll(strings.Trim(*tbList, ","), " ", ""), ",")
