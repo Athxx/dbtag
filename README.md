@@ -2,8 +2,8 @@
 
 it a db columns to go structure project.
 
-
 ## Features
+
 - support mysql , postgres
 - special for `xorm` and `gorm`
 - support any tags, `json`, `yaml`, `xml` and you custom it
@@ -11,21 +11,21 @@ it a db columns to go structure project.
 
 ## Install
 
-> go get -u -v github.com/athanxx/dbtag
+> go get -u -v github.com/Athxx/dbtag
 
 or you can download binary files for `Windows` and `Linux`
 
-> https://github.com/athanxx/dbtag/releases
+> <https://github.com/Athxx/dbtag/releases>
 
-## Example 
+## Example
 
 > dbtag
 
 or use args
 
-> dbtag -db_addr=127.0.0.1:3306 -db_auth=root:123456 -db_name=abc -adapter=postgres -dir=./model -fn=y   
+> dbtag -db_addr=127.0.0.1:3306 -db_auth=root:123456 -db_name=abc -adapter=postgres -dir=./model -fn=y
 
-it will ask what tables you want to generate, supported any tag what you want. 
+it will ask what tables you want to generate, supported any tag what you want.
 
 supported `xorm` and `gorm` formats to generate template structure.
 
@@ -37,7 +37,7 @@ supported `xorm` and `gorm` formats to generate template structure.
 
 `-db_name` database name `abc`
 
-`-adapter` support `mysql` and `postgres` 
+`-adapter` support `mysql` and `postgres`
 
 `-dir` generate directory path, pack name same with directory name `./abc/model`
 
@@ -45,18 +45,16 @@ supported `xorm` and `gorm` formats to generate template structure.
 
 `-t` table list, use ',' to split it `user_info,user_list`
 
-`-fn` it will create a function Table() to get table name `y` or others 
+`-fn` it will create a function Table() to get table name `y` or others
 
-`-sqlnull` to use sql.NullString `y` or others 
-
-
+`-sqlnull` to use sql.NullString `y` or others
 
 ## Demo
 
 ```go
 package model
 import (
-	"time"
+ "time"
 )
 /*
 CREATE TABLE `a` (
@@ -70,15 +68,14 @@ CREATE TABLE `a` (
 */
 
 type A struct{
-	A int       `db:"a" json:"a" yaml:"a" xorm:"a int(10) unsigned pk not null default(0) comment(1)" gorm:"primary_key;column:a;type:int(10) unsigned;not null;default:0;comment:1" toml:"a"`
-	B string    `db:"b" json:"b" yaml:"b" xorm:"b date not null default(2000-01-01) comment(2)" gorm:"column:b;type:date;not null;default:2000-01-01;comment:2" toml:"b"`
-	C time.Time `db:"c" json:"c" yaml:"c" xorm:"c datetime not null default(CURRENT_TIMESTAMP) comment(3)" gorm:"column:c;type:datetime;not null;default:CURRENT_TIMESTAMP;comment:3" toml:"c"`
-	D string    `db:"d" json:"d" yaml:"d" xorm:"d json not null comment(4)" gorm:"column:d;type:json;not null;comment:4" toml:"d"`
-	E string    `db:"e" json:"e" yaml:"e" xorm:"e varchar(100) not null default(abc) comment(5)" gorm:"column:e;type:varchar(100);not null;default:abc;comment:5" toml:"e"`
+ A int       `db:"a" json:"a" yaml:"a" xorm:"a int(10) unsigned pk not null default(0) comment(1)" gorm:"primary_key;column:a;type:int(10) unsigned;not null;default:0;comment:1" toml:"a"`
+ B string    `db:"b" json:"b" yaml:"b" xorm:"b date not null default(2000-01-01) comment(2)" gorm:"column:b;type:date;not null;default:2000-01-01;comment:2" toml:"b"`
+ C time.Time `db:"c" json:"c" yaml:"c" xorm:"c datetime not null default(CURRENT_TIMESTAMP) comment(3)" gorm:"column:c;type:datetime;not null;default:CURRENT_TIMESTAMP;comment:3" toml:"c"`
+ D string    `db:"d" json:"d" yaml:"d" xorm:"d json not null comment(4)" gorm:"column:d;type:json;not null;comment:4" toml:"d"`
+ E string    `db:"e" json:"e" yaml:"e" xorm:"e varchar(100) not null default(abc) comment(5)" gorm:"column:e;type:varchar(100);not null;default:abc;comment:5" toml:"e"`
 }
 
 func (t *A) Table() string {
-	return "a"
+ return "a"
 }
 ```
-
